@@ -50,11 +50,10 @@ def create_cred(cred_to_create):
     list_of_creds.append(new_cred)
 
     os.system('cls' if os.name == 'nt' else 'clear')
-    print(f"Updated credential: {new_cred.credential_name}")
+    input(f"Created credential: {new_cred.credential_name}.\n\nPress Enter to continue...")
     for key, value in new_cred.__dict__.items():
         if key != "cred":
             print(f"{key}: {value}")
-    input("\nCredential created. Press Enter to continue...")
 
     # sort and save the updated list to the JSON file
     list_of_creds.sort(key=lambda x: x.credential_name)
@@ -63,12 +62,12 @@ def create_cred(cred_to_create):
 
 def read_cred():
     os.system('cls' if os.name == 'nt' else 'clear')
-    search_term = input("Enter a credential name or ctrl+c to exit: ")
+    search_term = input("Enter a credential name or Ctrl+C to exit: ")
     os.system('cls' if os.name == 'nt' else 'clear')
     matching_creds = [cred for cred in list_of_creds if search_term.lower() in cred.credential_name.lower()]
     
     if not matching_creds:
-        print("Credential not found.\n")
+        print(f"\"{search_term}\" not found.\n")
         choice = input("Would you like to create this credential? (yes/no): ").strip().lower()
         if choice == "yes":
             create_cred(search_term)
@@ -99,8 +98,9 @@ def read_cred():
                     value = fernet.decrypt(value.encode()).decode()
                     pyperclip.copy(value)
                     time.sleep(0.25)
-            sys.stdout.write("\033[2F")
-            input("\nCredential attributes copied to clipboard. You can use win+v to view and select them!\n\nPress Enter to continue, or press ctrl+c to leave the program...")
+            os.system('cls' if os.name == 'nt' else 'clear')
+            input(f"\n{selected_cred.credential_name} credentials have been copied to clipboard. You can use WindowsKey+V to view and paste them!"
+                  "\n\nPress Enter to continue, or press Ctrl+C to leave the program...")
         else:
             print("Invalid choice. No action taken.")
         return selected_cred
@@ -142,7 +142,7 @@ def read_cred():
                         pyperclip.copy(value)
                         time.sleep(0.25)
                 sys.stdout.write("\033[2F")
-                input("\nCredential attributes copied to clipboard. You can use win+v to view and select them!\n\nPress Enter to continue, or press ctrl+c to leave the program...")
+                input("\nCredential attributes copied to clipboard. You can use win+v to view and select them!\n\nPress Enter to continue, or press Ctrl+C to leave the program...")
             else:
                 print("Invalid choice. No action taken.")
             return selected_cred
