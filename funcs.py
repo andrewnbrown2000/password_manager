@@ -1,6 +1,8 @@
 import os
 import sys
 import json
+import pyperclip
+import time
 from cryptography.fernet import Fernet
 from classes.credential import Credential
 
@@ -25,26 +27,32 @@ def load_creds():
     else:
         list_of_creds = []
 
-def create_cred():
+def create_cred(cred_to_create):
+    os.system('cls' if os.name == 'nt' else 'clear')
     fernet = Fernet(enc_key)
-    
-    credential_name = input("Enter the name of the credential (account, site, etc): ")
+
+    print(f"Credential name: {cred_to_create}")
     fields = {}
     while True:
-        field_name = input("Enter the field name (or 'done' to finish): ")
-        if field_name.lower() == 'done':
+        field_name = input("\nEnter the field name or press Enter to create: ")
+        if len(field_name) == 0:
             break
         value = input(f"Enter the value for {field_name}: ")
         encrypted_value = fernet.encrypt(value.encode()).decode()
         fields[field_name] = encrypted_value
 
-    new_cred = Credential(credential_name, **fields)
+    if len(fields) == 0:
+        #go up one line
+        sys.stdout.write("\033[F")
+        input("You cannot create a credential with 0 fields. Press Enter to continue...")
+        return
+    new_cred = Credential(cred_to_create, **fields)
     list_of_creds.append(new_cred)
 
     os.system('cls' if os.name == 'nt' else 'clear')
     print(f"Updated credential: {new_cred.credential_name}")
     for key, value in new_cred.__dict__.items():
-        if key != "credential_name":
+        if key != "cred":
             print(f"{key}: {value}")
     input("\nCredential created. Press Enter to continue...")
 
@@ -54,13 +62,20 @@ def create_cred():
         json.dump([cred.__dict__ for cred in list_of_creds], file, indent=4)
 
 def read_cred():
-    search_term = input("Enter the name of the credential: ")
+    os.system('cls' if os.name == 'nt' else 'clear')
+    search_term = input("Enter a credential name or ctrl+c to exit: ")
     os.system('cls' if os.name == 'nt' else 'clear')
     matching_creds = [cred for cred in list_of_creds if search_term.lower() in cred.credential_name.lower()]
     
     if not matching_creds:
-        print("Credential not found.")
-        input("\nPress Enter to continue...")
+        print("Credential not found.\n")
+        choice = input("Would you like to create this credential? (yes/no): ").strip().lower()
+        if choice == "yes":
+            create_cred(search_term)
+        elif choice == "no":
+            return None
+        else:
+            print("Invalid choice. Returning to main menu.")
         return None
 
     if len(matching_creds) == 1:
@@ -72,38 +87,73 @@ def read_cred():
         input("\nPress Enter to continue...")
 
         sys.stdout.write("\033[F") # move cursor up one line to clear input statement
-        action = input("Would you like to edit, delete, or do nothing with this credential? (edit/delete/none): ").strip().lower()
+        action = input("Would you like to edit, delete, or copy this credential to clipboard? (edit/delete/copy): ").strip().lower()
         if action == "edit":
             upd_cred(selected_cred)
         elif action == "delete":
             del_cred(selected_cred)
+        elif action == "copy":
+            fernet = Fernet(enc_key)
+            for key, value in selected_cred.__dict__.items():
+                if key != "credential_name":
+                    value = fernet.decrypt(value.encode()).decode()
+                    pyperclip.copy(value)
+                    time.sleep(0.25)
+            sys.stdout.write("\033[2F")
+            input("\nCredential attributes copied to clipboard. You can use win+v to view and select them!\n\nPress Enter to continue, or press ctrl+c to leave the program...")
         else:
             print("Invalid choice. No action taken.")
         return selected_cred
 
+    # select cred if multiple results are found
     print("Matching credentials:")
     for i, cred in enumerate(matching_creds, 1):
         print(f"{i}. {cred.credential_name}")
-
-    choice = input(f"Select the credential you want to view (1-{len(matching_creds)}): ")
-    os.system('cls' if os.name == 'nt' else 'clear')
     
-    if choice.isdigit() and 1 <= int(choice) <= len(matching_creds):
-        selected_cred = matching_creds[int(choice) - 1]
-        print(f"Selected credential: {selected_cred.credential_name}")
-        for key, value in selected_cred.__dict__.items():
-            if key != "credential_name":
-                print(f"{key}: {value}")
-        input("\nPress Enter to continue...")
+    print("\nAlternative options:")
+    print(f"{len(matching_creds) + 1}. Return to menu")
+    print(f"{len(matching_creds) + 2}. Create new credential")
 
-        action = input("Would you like to edit, delete, or do nothing with this credential? (edit/delete/none): ").strip().lower()
-        if action == "edit":
-            upd_cred(selected_cred)
-        elif action == "delete":
-            del_cred(selected_cred)
+    choice = input(f"\nSelect the credential you want to view (1-{len(matching_creds) + 2}): ")
+    os.system('cls' if os.name == 'nt' else 'clear')
+
+    if choice.isdigit():
+        choice = int(choice)
+        if 1 <= choice <= len(matching_creds):
+            selected_cred = matching_creds[choice - 1]
+            print(f"Selected credential: {selected_cred.credential_name}")
+            for key, value in selected_cred.__dict__.items():
+                if key != "credential_name":
+                    print(f"{key}: {value}")
+            input("\nPress Enter to continue...")
+
+            sys.stdout.write("\033[F")  # move cursor up one line to clear input statement
+
+            action = input("Would you like to edit, delete, or copy this credential to clipboard? (edit/delete/copy): ").strip().lower()
+            if action == "edit":
+                upd_cred(selected_cred)
+            elif action == "delete":
+                del_cred(selected_cred)
+            elif action == "copy":
+                fernet = Fernet(enc_key)
+                for key, value in selected_cred.__dict__.items():
+                    if key != "credential_name":
+                        value = fernet.decrypt(value.encode()).decode()
+                        pyperclip.copy(value)
+                        time.sleep(0.25)
+                sys.stdout.write("\033[2F")
+                input("\nCredential attributes copied to clipboard. You can use win+v to view and select them!\n\nPress Enter to continue, or press ctrl+c to leave the program...")
+            else:
+                print("Invalid choice. No action taken.")
+            return selected_cred
+        elif choice == len(matching_creds) + 1:
+            print("Returning to main menu.")
+            return None
+        elif choice == len(matching_creds) + 2:
+            create_cred(search_term)
         else:
-            print("Invalid choice. No action taken.")
-        return selected_cred
+            print("Invalid choice. No credential selected.")
+            return None
     else:
         print("Invalid choice. No credential selected.")
         return None
@@ -188,6 +238,7 @@ def upd_cred(cred):
         json.dump([cred.__dict__ for cred in list_of_creds], file, indent=4)
 
 def del_cred(cred):
+    os.system('cls' if os.name == 'nt' else 'clear')
     confirm = input(f"Are you sure you want to delete the credential '{cred.credential_name}'? (yes/no): ").strip().lower()
     if confirm == "yes":
         list_of_creds.remove(cred)
