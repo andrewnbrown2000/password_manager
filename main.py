@@ -1,6 +1,6 @@
 # filepath: /c:/Users/andy/Documents/Projects/Python/Encryption/main.py
 import os
-from funcs import *
+from cloud_funcs import *
 
 
 def main():
