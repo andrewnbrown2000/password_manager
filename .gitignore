@@ -2,5 +2,6 @@ backup/*
 __pycache__/*
 classes/__pycache__/*
 credentials.json
+demo_videos/*
 encryption_key.key
 run_script.sh

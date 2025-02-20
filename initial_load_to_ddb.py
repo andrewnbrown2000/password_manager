@@ -5,7 +5,6 @@ from classes.credential import Credential
 #load ddb
 dynamodb = boto3.client('dynamodb')
 table_name = "ab_cred_table"
-attributes = {}
 creds_converted = []
 
 #variables
@@ -17,16 +16,14 @@ with open(cred_file, "r") as file:
 
 #convert list items to objects. primarily for uniformity
 for cred in cred_list:
+    cred_name = cred.pop("credential_name")
+    cred_obj = Credential(cred_name)
     for key, value in cred.items():
-        if key != "credential_name":
-            attributes[key] = value
-        else:
-            cred_name = value
-    cred = Credential(cred_name, **attributes)
-    creds_converted.append(cred)
+        setattr(cred_obj, key, value)
+    creds_converted.append(cred_obj)
 
 for cred in creds_converted:
-    cred_name = cred.credential_name
+    cred_name = cred.name
     attributes = {key: value for key, value in cred.__dict__.items() if key != "credential_name"}
     
     # Convert attributes to JSON string
