@@ -5,3 +5,5 @@ credentials.json
 demo_videos/*
 encryption_key.key
 run_script.sh
+test.py
+unencrypt_test.py

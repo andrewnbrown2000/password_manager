@@ -6,7 +6,6 @@ import time
 from classes.credential import Credential
 
 from cryptography.fernet import Fernet
-key_file = "encryption_key.key"
 
 #load ddb
 import boto3
@@ -161,7 +160,7 @@ def scan_db(search_item):
 def items_to_objs(items):
     credentials = []
     for item in items:
-        attributes = json.loads(item['attributes']['S'])
+        attributes = {k: v for k, v in json.loads(item['attributes']['S']).items() if k != 'name'}
         credentials.append(Credential(item['cred_name']['S'], **attributes))
     return credentials
 
@@ -231,5 +230,3 @@ def del_cred(cred):
     os.system('cls' if os.name == 'nt' else 'clear')
     input(f"Deleted credential: {cred.name}\n\nPress Enter to continue...")
 
-#load the encryption key
-load_key(key_file)
