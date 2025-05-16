@@ -14,7 +14,7 @@ def decrypt_string(encrypted_string, key):
 
 if __name__ == "__main__":
     key_file_path = 'encryption_key.key'
-    encrypted_string = ''  # Replace with your encrypted string
+    encrypted_string = 'gAAAAABnpke57hMkuUFsMmqMWFwWhXHbNfkLEI5G0-uojVBudiGXAAn97uxuU_hmxiuJNoLwNfVmP56byGTx3lZrrn-ZDabCRw=="'  # Replace with your encrypted string
 
     key = load_key(key_file_path)
     decrypted_string = decrypt_string(encrypted_string, key)
